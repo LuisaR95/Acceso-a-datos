@@ -1,17 +1,15 @@
 import java.io.*;
-import java.nio.file.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
+// Enum para los niveles de log
 enum NivelLog {
-    INFO, WARNING, ERROR
+    INFO, ERROR
 }
 
+// Clase principal del sistema de logging
 public class SistemaLog {
 
     private String archivoLog;
-    private long tamanoMaximo; // en bytes
-    private int numeroRotacion;
+    private long tamanoMaximo; // Tamaño máximo en bytes
 
     public SistemaLog(String archivoLog, long tamanoMaximo) {
         if (archivoLog == null || archivoLog.isEmpty()) {
@@ -22,37 +20,36 @@ public class SistemaLog {
         }
         this.archivoLog = archivoLog;
         this.tamanoMaximo = tamanoMaximo;
-        this.numeroRotacion = 1;
     }
 
-
-    public synchronized void escribirLog(String mensaje, NivelLog nivel) throws IOException {
+    // Método para escribir un log con fecha fija
+    public synchronized void escribirLog(String fecha, String mensaje, NivelLog nivel) throws IOException {
         if (mensaje == null) mensaje = "";
         if (nivel == null) nivel = NivelLog.INFO;
+        if (fecha == null) fecha = "2025-10-14 10:30:00";
 
-        // Formato ISO 8601 para la fecha
-        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        String lineaLog = String.format("[%s] [%s] %s", timestamp, nivel, mensaje);
+        // Línea de log con formato
+        String lineaLog = String.format("[%s] [%s] %s", fecha, nivel, mensaje);
 
-        // Rotar si el archivo supera el tamaño
+        // Rotar archivo si supera el tamaño máximo
         if (rotarSiNecesario()) {
             System.out.println("ROTACIÓN: " + archivoLog + " renombrado a " + archivoLog + ".1");
         }
 
-        // Escribir la línea
+        // Escribir línea en el archivo actual
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoLog, true))) {
             writer.write(lineaLog);
             writer.newLine();
-            writer.flush();
         }
 
+        // Mostrar en consola
         System.out.println("Log escrito: " + mensaje);
     }
 
-
+    // Método que revisa si es necesario rotar el archivo
     private boolean rotarSiNecesario() throws IOException {
         File logFile = new File(archivoLog);
-        if (logFile.exists() && obtenerTamanoLog() >= tamanoMaximo) {
+        if (logFile.exists() && logFile.length() >= tamanoMaximo) {
             File archivoRotado = new File(archivoLog + ".1");
 
             // Eliminar archivo rotado anterior si existe
@@ -65,38 +62,26 @@ public class SistemaLog {
                 throw new IOException("No se pudo rotar el archivo de log.");
             }
 
-            numeroRotacion++;
+            // Crear nuevo archivo vacío
+            logFile.createNewFile();
             return true;
         }
         return false;
     }
 
-
-    private long obtenerTamanoLog() {
-        File logFile = new File(archivoLog);
-        if (logFile.exists()) {
-            return logFile.length();
-        }
-        return 0;
-    }
-
-    // Método de prueba
+    // Método principal de prueba
     public static void main(String[] args) {
         try {
-            SistemaLog log = new SistemaLog("app.log", 1024); // 1KB máximo
+            // Crear sistema de log con tamaño máximo de 100 bytes para prueba de rotación
+            SistemaLog log = new SistemaLog("app.log", 100);
 
-            log.escribirLog("Aplicación iniciada", NivelLog.INFO);
-            log.escribirLog("Usuario conectado", NivelLog.INFO);
-            log.escribirLog("Error de conexión", NivelLog.ERROR);
-
-            // Agregamos muchos mensajes para forzar rotación
-            for (int i = 0; i < 50; i++) {
-                log.escribirLog("Mensaje de prueba " + i, NivelLog.INFO);
-            }
+            // Escribir logs con fechas fijas
+            log.escribirLog("2025-10-14 10:30:15", "Aplicación iniciada", NivelLog.INFO);
+            log.escribirLog("2025-10-14 10:30:16", "Usuario conectado", NivelLog.INFO);
+            log.escribirLog("2025-10-14 10:30:17", "Error de conexión", NivelLog.ERROR);
 
         } catch (IOException e) {
             System.err.println("Error en logging: " + e.getMessage());
         }
     }
 }
-
