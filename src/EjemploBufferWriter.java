@@ -2,7 +2,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class EjemploNufferWriter {
+public class EjemploBufferWriter {
     public static void main(String[] args) {
         //Array con lineas a escrbir
         String[] lineas = {
@@ -13,7 +13,7 @@ public class EjemploNufferWriter {
         };
 
         //BufferedWriter envuelve al objeto FileWriter para añadir Buffering
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter("salida_buffer.txt"))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("salida.txt"))) {
             //bucle for-eacg que escribe linea a linea con salto incluido
             for (String linea : lineas) {
                 //la escritura en el documento
