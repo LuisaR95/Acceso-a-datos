@@ -12,7 +12,7 @@ enum NivelLog {
 
 /**
  * Clase principal que implementa un sistema de logging con rotación
- * basada en el tamaño del archivo.
+ * basada en el tamaño del archivo, manteniendo logs históricos secuenciales.
  */
 class SistemaLog {
     private final File logFile;
@@ -20,15 +20,10 @@ class SistemaLog {
     private final long tamanoMaximo; // en bytes
     private final DateTimeFormatter formatoFecha;
 
-    // Esta variable se define en el requisito, pero para una rotación simple a .1 no es necesaria.
-    // Se mantiene para compatibilidad futura (e.g., rotación a .2, .3, etc.).
-    private final int numeroRotacionBase = 1;
+    // Máximo de archivos rotados a mantener (e.g., app.log.1 a app.log.5)
+    private static final int MAX_ROTATIONS = 5;
 
-    /**
-     * Constructor para inicializar el sistema de log.
-     * @param archivoLog Nombre del archivo de log (e.g., "app.log")
-     * @param tamanoMaximo Tamaño máximo permitido antes de la rotación (en bytes).
-     */
+
     public SistemaLog(String archivoLog, long tamanoMaximo) {
         // Validar parámetros
         if (archivoLog == null || archivoLog.trim().isEmpty()) {
@@ -50,28 +45,23 @@ class SistemaLog {
                 logFile.createNewFile();
             }
         } catch (IOException e) {
+            // Este es un error en tiempo de ejecución, pero lo manejamos para mostrar la causa.
             System.err.println("ERROR al inicializar el archivo de log: " + e.getMessage());
         }
     }
 
-    /**
-     * Escribe un mensaje en el log con timestamp.
-     * El método es sincronizado para asegurar la seguridad en entornos multi-hilo
-     * y evitar condiciones de carrera en la rotación y escritura.
-     * * @param mensaje Contenido a registrar.
-     * @param nivel Nivel del log (INFO, WARNING, ERROR).
-     * @throws IOException si hay error al escribir.
-     */
+
     public synchronized void escribirLog(String mensaje, NivelLog nivel) throws IOException {
         // 1. Verificar y rotar si es necesario antes de escribir
-        rotarSiNecesario();
+        if (rotarSiNecesario()) {
+            System.out.printf("ROTACIÓN: %s renombrado. Archivos 1 a %d desplazados.%n", archivoLogNombre, MAX_ROTATIONS);
+        }
 
         // 2. Formato de la línea de log
         String timestamp = LocalDateTime.now().format(formatoFecha);
         String lineaLog = String.format("[%s] [%s] %s", timestamp, nivel.name(), mensaje);
 
         // 3. Escritura eficiente usando BufferedWriter y try-with-resources
-        // El 'true' en FileWriter indica que se debe escribir en modo "append" (añadir al final)
         try (FileWriter fw = new FileWriter(logFile, true);
              BufferedWriter bw = new BufferedWriter(fw)) {
 
@@ -87,34 +77,44 @@ class SistemaLog {
         }
     }
 
-    /**
-     * Obtiene el tamaño actual del archivo de log.
-     * * @return Tamaño en bytes.
-     */
+
     private long obtenerTamanoLog() {
         return this.logFile.length();
     }
 
-    /**
-     * Verifica si el archivo debe rotarse y ejecuta la rotación.
-     * Implementa la rotación simple: app.log -> app.log.1
-     * * @return true si se realizó la rotación.
-     * @throws IOException si hay error en el movimiento/renombrado del archivo.
-     */
+
     private boolean rotarSiNecesario() throws IOException {
         if (obtenerTamanoLog() >= tamanoMaximo) {
 
-            // 1. Definir rutas
-            String archivoRotadoNombre = archivoLogNombre + "." + numeroRotacionBase;
+            // 1. Desplazar archivos existentes (de N a N+1, eliminando el más antiguo)
+            for (int i = MAX_ROTATIONS; i >= 1; i--) {
+                String nombreFuente = archivoLogNombre + "." + i;
+                String nombreDestino = archivoLogNombre + "." + (i + 1);
+
+                File fuente = new File(nombreFuente);
+                if (fuente.exists()) {
+                    File destino = new File(nombreDestino);
+
+                    // Si el archivo más antiguo (i+1, ej: 6) existe, lo eliminamos.
+                    if (destino.exists()) {
+                        destino.delete();
+                    }
+
+                    // Mover el archivo (ej: app.log.5 -> app.log.6)
+                    Files.move(fuente.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+
+            // 2. Renombrar el archivo actual (app.log -> app.log.1)
+            String archivoRotadoNombre = archivoLogNombre + ".1";
             Path fuente = logFile.toPath();
             Path destino = Paths.get(archivoRotadoNombre);
 
-            // 2. Renombrar/mover el archivo actual a la versión rotada
-            // Se usa REPLACE_EXISTING para sobrescribir app.log.1 si ya existe (rotación simple)
+            // Renombrar/mover el archivo actual a la versión .1
             Files.move(fuente, destino, StandardCopyOption.REPLACE_EXISTING);
 
-            // 3. Imprimir mensaje en consola (para el caso de uso)
-            System.out.printf("ROTACIÓN: %s renombrado a %s%n", archivoLogNombre, archivoRotadoNombre);
+            // 3. Crear un nuevo archivo de log vacío
+            logFile.createNewFile();
 
             return true;
         }
@@ -123,37 +123,29 @@ class SistemaLog {
 
     public static void main(String[] args) {
         final String NOMBRE_LOG = "app.log";
-        // Tamaño máximo de 1024 bytes (1 KB) para la prueba
-        final long TAMANO_MAXIMO = 1024;
+        // Tamaño máximo ajustado a 90 bytes para forzar la rotación después del 2º mensaje
+        final long TAMANO_MAXIMO = 90;
 
         try {
             // Crear instancia del sistema de log
             SistemaLog log = new SistemaLog(NOMBRE_LOG, TAMANO_MAXIMO);
 
-            System.out.println("--- DEMOSTRACIÓN DE LOGGING CON ROTACIÓN ---");
-            System.out.println("Archivo de log: " + NOMBRE_LOG + " | Tamaño máximo: " + TAMANO_MAXIMO + " bytes.");
+            System.out.println("--- DEMOSTRACIÓN CASO DE USO ORIGINAL ---");
+            System.out.printf("Log: %s | Max: %d bytes%n", NOMBRE_LOG, TAMANO_MAXIMO);
             System.out.println("------------------------------------------");
 
-            // Mensajes iniciales que caben en el log
+            // 1. Se escriben los dos primeros logs (deben llenar app.log)
             log.escribirLog("Aplicación iniciada", NivelLog.INFO);
-            log.escribirLog("Usuario conectado: admin", NivelLog.INFO);
+            log.escribirLog("Usuario conectado", NivelLog.INFO);
 
-            // Escribir un mensaje grande para forzar la rotación
-            String mensajeGrande = "==========================================";
-            // Aproximadamente 55 caracteres por línea * 20 líneas = ~1100 bytes
-            // Esto forzará la rotación si el límite es 1024 bytes
-            for (int i = 0; i < 20; i++) {
-                log.escribirLog(mensajeGrande + " Mensaje de carga " + i, NivelLog.WARNING);
-            }
-
-            // Este log se escribirá en el NUEVO archivo 'app.log' después de la rotación
-            log.escribirLog("Error de conexión a la base de datos (Post-Rotación)", NivelLog.ERROR);
-            log.escribirLog("Sistema normalizado", NivelLog.INFO);
+            // 2. El tercer log activa la rotación ANTES de escribirse.
+            log.escribirLog("Error de conexión", NivelLog.ERROR);
 
             System.out.println("------------------------------------------");
-            System.out.println("Prueba finalizada. Verifique los archivos:");
-            System.out.println("- '" + NOMBRE_LOG + "' (Debe contener solo los últimos mensajes).");
-            System.out.println("- '" + NOMBRE_LOG + ".1' (Debe contener el contenido anterior).");
+            System.out.println("Prueba de rotación finalizada.");
+            System.out.println("Verifique el contenido de los archivos:");
+            System.out.println("- '" + NOMBRE_LOG + ".1' (Debe contener los dos primeros logs).");
+            System.out.println("- '" + NOMBRE_LOG + "' (Debe contener solo el último log).");
 
         } catch (IllegalArgumentException e) {
             System.err.println("Error de configuración: " + e.getMessage());
