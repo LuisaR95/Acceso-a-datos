@@ -9,11 +9,6 @@ public class MergeArchivos {
     /**
      * Combina varios archivos de texto en uno solo aplicando un filtro de palabra completa.
      *
-     * @param archivosEntrada Array con rutas de archivos a combinar
-     * @param archivoSalida   Ruta del archivo de salida
-     * @param filtro          Palabra que deben contener las líneas para ser incluidas (null = todas)
-     * @return Número total de líneas escritas en el archivo de salida
-     * @throws IOException Si ocurre algún error de lectura/escritura de archivos
      */
     public static int combinarArchivos(String[] archivosEntrada, String archivoSalida, String filtro) throws IOException {
         int totalLineasEscritas = 0;
@@ -77,12 +72,12 @@ public class MergeArchivos {
         try {
             // Archivos de entrada a combinar
             String[] archivosEntrada = {
-                    "C:\\Users\\AlumnoAfternoon\\IdeaProjects\\Acceso-a-datos\\src\\archivo1.txt",
-                    "C:\\Users\\AlumnoAfternoon\\IdeaProjects\\Acceso-a-datos\\src\\archivo2.txt"
+                    "C:\\Users\\AlumnoAfternoon\\IdeaProjects\\Acceso-a-datos\\archivo1.txt",
+                    "C:\\Users\\AlumnoAfternoon\\IdeaProjects\\Acceso-a-datos\\archivo2.txt"
             };
 
             // Archivo de salida combinado
-            String archivoSalida = "C:\\Users\\AlumnoAfternoon\\IdeaProjects\\Acceso-a-datos\\src\\combinado.txt";
+            String archivoSalida = "C:\\Users\\AlumnoAfternoon\\IdeaProjects\\Acceso-a-datos\\combinado.txt";
 
             // Filtro de palabra: solo incluir líneas que contengan "Java"
             String filtro = "Java";
