@@ -34,9 +34,7 @@ public class InventarioManager {
 
     private static final String ARCHIVO_INVENTARIO = "inventario.dat";
 
-    /**
-     * Escribe un producto en el archivo binario (Sobreescribe el archivo).
-     */
+
     public static void escribirProducto(String archivo, Producto producto) throws IOException {
         // Usa try-with-resources y DataOutputStream
         try (
@@ -49,14 +47,12 @@ public class InventarioManager {
             dos.writeDouble(producto.getPrecio());
             dos.writeInt(producto.getStock());
 
-            // Salida de consola requerida
+            // Salida de consola
             System.out.println("Producto guardado: " + producto.getNombre());
         }
     }
 
-    /**
-     * Añade un producto al final del archivo (modo append).
-     */
+
     public static void agregarProducto(String archivo, Producto producto) throws IOException {
         // Usa 'true' en FileOutputStream para el modo append
         try (
@@ -74,9 +70,7 @@ public class InventarioManager {
         }
     }
 
-    /**
-     * Lee todos los productos del archivo binario.
-     */
+
     public static List<Producto> leerProductos(String archivo) throws IOException {
         List<Producto> productos = new ArrayList<>();
         File file = new File(archivo);
@@ -111,14 +105,14 @@ public class InventarioManager {
         new File(ARCHIVO_INVENTARIO).delete();
 
         try {
-            // --- PASO 1: Escribir ---
+            // PASO 1: Escribir
             Producto p1 = new Producto(1, "Laptop", 999.99, 10);
             Producto p2 = new Producto(2, "Mouse", 19.99, 50);
 
             escribirProducto(ARCHIVO_INVENTARIO, p1);
             agregarProducto(ARCHIVO_INVENTARIO, p2);
 
-            // --- PASO 2: Leer e Imprimir ---
+            // PASO 2: Leer e Imprimir
             System.out.println("\n--- Lectura del Inventario ---");
             List<Producto> productosLeidos = leerProductos(ARCHIVO_INVENTARIO);
 
