@@ -5,14 +5,14 @@ import java.sql.*;
 
 public class DBExporter {
 
-    // --- CONFIGURACIÓN DE LA BASE DE DATOS ---
-    // ¡ADVERTENCIA! Cambia esto por tus credenciales
+    // CONFIGURACIÓN DE LA BASE DE DATOS
+
     private static final String URL = "jdbc:mysql://localhost:3306/mi_base_datos";
     private static final String USER = "root";
     private static final String PASSWORD = "mysql";
     private static final String ARCHIVO_BACKUP = "backup_productos.dat";
 
-    // --- FUNCIONES DE BASE DE DATOS Y ARCHIVO (IMPLEMENTACIÓN ANTERIOR) ---
+    // FUNCIONES DE BASE DE DATOS Y ARCHIVO (IMPLEMENTACIÓN ANTERIOR)
 
 
     public static int exportarProductos(Connection conn, String archivo)
@@ -95,7 +95,7 @@ public class DBExporter {
         return contador;
     }
 
-    // --- MÉTODOS DE SOPORTE PARA EL EJEMPLO DE USO ---
+    //  MÉTODOS DE SOPORTE PARA EL EJEMPLO DE USO
 
 
     private static void setupDatabase(Connection conn) throws SQLException {
@@ -129,7 +129,7 @@ public class DBExporter {
             // 2. Configurar la base de datos con datos de prueba
             setupDatabase(conn);
 
-            // --- EJEMPLO DE USO (Exportar) ---
+            // EJEMPLO DE USO (Exportar)
             int exportados = exportarProductos(conn, ARCHIVO_BACKUP);
             System.out.println("\n*** Productos exportados: " + exportados + " ***");
 
@@ -140,7 +140,7 @@ public class DBExporter {
             }
             System.out.println("Registros en 'productos' después de limpiar: " + getRowCount(conn));
 
-            // --- EJEMPLO DE USO (Importar) ---
+            // EJEMPLO DE USO (Importar)
             int importados = importarProductos(conn, ARCHIVO_BACKUP);
             System.out.println("\n*** Productos importados: " + importados + " ***");
             System.out.println("Registros en 'productos' después de importar: " + getRowCount(conn));
