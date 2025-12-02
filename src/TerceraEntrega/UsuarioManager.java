@@ -33,9 +33,6 @@ public class UsuarioManager {
 
     // --- Funciones de Gestión CRUD ---
 
-    /**
-     * Crea la tabla usuarios si no existe.
-     */
     public static void crearTabla(Connection conn) throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS usuarios ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY,"
@@ -51,9 +48,7 @@ public class UsuarioManager {
         }
     }
 
-    /**
-     * Inserta un nuevo usuario en la base de datos.
-     */
+
     public static int insertarUsuario(Connection conn, String nombre, String email, int edad) throws SQLException {
         String sql = "INSERT INTO usuarios (nombre, email, edad) VALUES (?, ?, ?)";
         int idGenerado = -1;
@@ -81,9 +76,7 @@ public class UsuarioManager {
         return idGenerado;
     }
 
-    /**
-     * Busca usuarios por nombre (búsqueda parcial usando LIKE).
-     */
+
     public static List<Usuario> buscarPorNombre(Connection conn, String nombre) throws SQLException {
         // Búsqueda parcial con LIKE y % (PreparedStatement protege contra la inyección)
         String sql = "SELECT id, nombre, email, edad FROM usuarios WHERE nombre LIKE ?";
@@ -109,9 +102,7 @@ public class UsuarioManager {
         return usuarios;
     }
 
-    /**
-     * Actualiza el email de un usuario.
-     */
+
     public static boolean actualizarEmail(Connection conn, int id, String nuevoEmail) throws SQLException {
         String sql = "UPDATE usuarios SET email = ? WHERE id = ?";
 
@@ -130,9 +121,9 @@ public class UsuarioManager {
         }
     }
 
-    /**
-     * Elimina un usuario por ID.
-     */
+
+     // Elimina un usuario por ID.
+
     public static boolean eliminarUsuario(Connection conn, int id) throws SQLException {
         String sql = "DELETE FROM usuarios WHERE id = ?";
 
@@ -150,7 +141,7 @@ public class UsuarioManager {
         }
     }
 
-    // --- Caso de Uso de Prueba (main) ---
+    // Caso de Uso de Prueba (main)
 
     public static void main(String[] args) {
         // IMPORTANTE: Cambia estos valores por tu configuración local
