@@ -4,27 +4,19 @@ import java.util.Properties;
 
 public class ConfigMigrator {
 
-    // --- CONFIGURACIÓN DE LA BASE DE DATOS Y ARCHIVOS ---
+    // CONFIGURACIÓN DE LA BASE DE DATOS Y ARCHIVOS
     private static final String URL = "jdbc:mysql://localhost:3306/mi_base_datos";
     private static final String USER = "root";
     private static final String PASSWORD = "mysql";
     private static final String ARCHIVO_CONFIG_INICIAL = "config.properties";
     private static final String ARCHIVO_CONFIG_EXPORTADO = "config_exportado.properties";
 
-    // --- ESTRUCTURA DE LA TABLA ---
+    // ESTRUCTURA DE LA TABLA
     private static final String TABLE_NAME = "configuracion";
     private static final String COLUMN_KEY = "clave";
     private static final String COLUMN_VALUE = "valor";
 
-    /**
-     * Migra todas las propiedades de archivo Properties a la base de datos.
-     * Si una clave ya existe, la actualiza. Si no, la inserta.
-     * * @param archivo ruta del archivo Properties
-     * @param conn conexión JDBC 
-     * @return número de propiedades migradas (insertadas o actualizadas)
-     * @throws IOException si hay error al leer archivo
-     * @throws SQLException si hay error de BD
-     */
+
     public static int migrarPropertiesABD(String archivo, Connection conn)
             throws IOException, SQLException {
 
@@ -33,7 +25,7 @@ public class ConfigMigrator {
 
         System.out.println("Migrando propiedades a BD...");
 
-        // 1. Cargar el archivo Properties
+        // Cargar el archivo Properties
         try (FileInputStream fis = new FileInputStream(archivo)) {
             props.load(fis);
         }
@@ -44,7 +36,7 @@ public class ConfigMigrator {
                 " (" + COLUMN_KEY + ", " + COLUMN_VALUE + ") VALUES (?, ?) " +
                 "ON DUPLICATE KEY UPDATE " + COLUMN_VALUE + " = VALUES(" + COLUMN_VALUE + ")";
 
-        // 2. Preparar la sentencia SQL y ejecutar la migración
+        // Preparar la sentencia SQL y ejecutar la migración
         try (PreparedStatement ps = conn.prepareStatement(SQL_UPSERT)) {
             conn.setAutoCommit(false); // Iniciar transacción
 
@@ -69,14 +61,7 @@ public class ConfigMigrator {
         return contador;
     }
 
-    /**
-     * Exporta configuración de base de datos a archivo Properties.
-     * * @param conn conexión JDBC 
-     * @param archivo ruta del archivo destino
-     * @return número de propiedades exportadas
-     * @throws SQLException si hay error de BD
-     * @throws IOException si hay error al escribir
-     */
+
     public static int exportarBDaProperties(Connection conn, String archivo)
             throws SQLException, IOException {
 
@@ -88,7 +73,7 @@ public class ConfigMigrator {
         // SQL para obtener todas las configuraciones
         final String SQL_SELECT = "SELECT " + COLUMN_KEY + ", " + COLUMN_VALUE + " FROM " + TABLE_NAME;
 
-        // 1. Leer los datos de la base de datos
+        // Leer los datos de la base de datos
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(SQL_SELECT)) {
 
@@ -100,7 +85,7 @@ public class ConfigMigrator {
             }
         }
 
-        // 2. Guardar las propiedades en el archivo
+        // Guardar las propiedades en el archivo
         try (FileOutputStream fos = new FileOutputStream(archivo)) {
             props.store(fos, "Configuración exportada desde BD");
         }
@@ -109,17 +94,8 @@ public class ConfigMigrator {
         return contador;
     }
 
-    /**
-     * Sincroniza: actualiza BD con valores de Properties que hayan cambiado
-     * y viceversa, o simplemente actualiza solo la BD (como se pide).
-     * * Nota: La implementación aquí solo actualiza la BD si el valor del archivo Properties es diferente
-     * al valor actualmente en la BD.
-     * * @param archivo ruta del archivo Properties 
-     * @param conn conexión JDBC 
-     * @return número de propiedades actualizadas
-     * @throws IOException si hay error al leer 
-     * @throws SQLException si hay error de BD
-     */
+
+
     public static int sincronizarPropiedades(String archivo, Connection conn)
             throws IOException, SQLException {
 
@@ -128,12 +104,12 @@ public class ConfigMigrator {
 
         System.out.println("\nSincronizando Properties con BD...");
 
-        // 1. Cargar el archivo Properties
+        // Cargar el archivo Properties
         try (FileInputStream fis = new FileInputStream(archivo)) {
             fileProps.load(fis);
         }
 
-        // 2. Preparar sentencias SQL
+        // Preparar sentencias SQL
         // SQL para obtener el valor actual de una clave en la BD
         final String SQL_SELECT_CURRENT = "SELECT " + COLUMN_VALUE + " FROM " + TABLE_NAME + " WHERE " + COLUMN_KEY + " = ?";
         // SQL para actualizar un valor
@@ -193,11 +169,9 @@ public class ConfigMigrator {
     }
 
 
-    // --- MÉTODOS DE SOPORTE PARA EL EJEMPLO DE USO ---
+    // MÉTODOS DE SOPORTE PARA EL EJEMPLO DE USO
 
-    /**
-     * Crea el archivo properties de prueba.
-     */
+
     private static void createTestFile(String archivo) throws IOException {
         Properties props = new Properties();
         props.setProperty("db.host", "localhost");
@@ -211,9 +185,7 @@ public class ConfigMigrator {
         System.out.println("Archivo de prueba creado: " + archivo);
     }
 
-    /**
-     * Configura la tabla de base de datos.
-     */
+
     private static void setupDatabase(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
             // Eliminar tabla anterior para una prueba limpia
@@ -238,17 +210,17 @@ public class ConfigMigrator {
             // Crear el archivo de configuración inicial
             createTestFile(ARCHIVO_CONFIG_INICIAL);
 
-            // 1. Establecer la conexión con la base de datos
+            // Establecer la conexión con la base de datos
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
 
             // 2. Configurar la tabla de base de datos
             setupDatabase(conn);
 
-            // --- EJEMPLO DE USO 1: Migrar de archivo a BD ---
+            // EJEMPLO DE USO 1: Migrar de archivo a BD
             int migradas = migrarPropertiesABD(ARCHIVO_CONFIG_INICIAL, conn);
             System.out.println("\n*** Propiedades migradas a BD: " + migradas + " ***");
 
-            // --- EJEMPLO DE USO 2: Modificar en BD ---
+            //  EJEMPLO DE USO 2: Modificar en BD
             System.out.println("\n--- Modificando valor 'db.port' en BD (3306 -> 3307) ---");
             final String SQL_UPDATE = "UPDATE " + TABLE_NAME + " SET " + COLUMN_VALUE + " = ? WHERE " + COLUMN_KEY + " = ?";
             try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
@@ -257,12 +229,12 @@ public class ConfigMigrator {
                 ps.executeUpdate();
             }
 
-            // --- EJEMPLO DE USO 3: Exportar de BD a archivo ---
+            // EJEMPLO DE USO 3: Exportar de BD a archivo
             int exportadas = exportarBDaProperties(conn, ARCHIVO_CONFIG_EXPORTADO);
             System.out.println("\n*** Propiedades exportadas a archivo: " + exportadas + " ***");
             System.out.println("Verifica el archivo " + ARCHIVO_CONFIG_EXPORTADO + " para el cambio (db.port = 3307).");
 
-            // --- EJEMPLO DE USO 4: Sincronizar (Cambio de vuelta y adición de nueva) ---
+            // EJEMPLO DE USO 4: Sincronizar (Cambio de vuelta y adición de nueva)
             System.out.println("\n--- Creando archivo modificado para sincronización... ---");
             // Cargar el archivo exportado y hacer cambios para la prueba de sincronización
             Properties syncProps = new Properties();
