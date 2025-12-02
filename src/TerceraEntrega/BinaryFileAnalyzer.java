@@ -97,8 +97,7 @@ public class BinaryFileAnalyzer {
                 dis.mark(1024); // Marcamos hasta 1KB de distancia.
 
                 try {
-                    // --- 1. Intentar leer STRING (readUTF) ---
-                    // Un String UTF consume 2 bytes de longitud + la longitud de la cadena.
+                    // Intentar leer STRING (readUTF) ---
                     // Intentamos leer el String. Si falla, el formato no era de String UTF.
                     String str = dis.readUTF();
                     tipo = "UTF";
@@ -107,25 +106,16 @@ public class BinaryFileAnalyzer {
                     // La longitud del String UTF se calcula indirectamente por DataInputStream,
 
 
-                    // Necesitamos recalcular bytesLeidos después de readUTF
-                    // Para esto, es mejor usar RandomAccessFile directamente si queremos el puntero
-                    // preciso, pero el ejercicio pide DataInputStream.
-
-
-
-
                     // Intentar leer STRING:
                     // Si readUTF tiene éxito, el puntero se movió a la nueva posición.
 
-                    // Usaremos un try-catch anidado para intentar los tipos en orden,
-                    // y solo si falla, restablecemos el stream a la posición inicial.
 
                 } catch (UTFDataFormatException | EOFException e) {
                     // El intento de leer String falló.
                     dis.reset(); // Restablecer la posición del stream
 
                     try {
-                        // --- 2. Intentar leer DOUBLE (8 bytes) ---
+                        // Intentar leer DOUBLE (8 bytes) ---
                         if (dis.available() >= 8) {
                             double d = dis.readDouble();
                             tipo = "DOUBLE";
@@ -138,7 +128,7 @@ public class BinaryFileAnalyzer {
                         dis.reset(); // Restablecer la posición
 
                         try {
-                            // --- 3. Intentar leer INT (4 bytes) ---
+                            // Intentar leer INT (4 bytes) ---
                             if (dis.available() >= 4) {
                                 int i = dis.readInt();
                                 tipo = "INT";
@@ -151,7 +141,7 @@ public class BinaryFileAnalyzer {
                             dis.reset(); // Restablecer la posición
 
                             try {
-                                // --- 4. Intentar leer BOOLEAN (1 byte) ---
+                                // Intentar leer BOOLEAN (1 byte)
                                 if (dis.available() >= 1) {
                                     boolean b = dis.readBoolean();
                                     tipo = "BOOLEAN";
@@ -162,7 +152,6 @@ public class BinaryFileAnalyzer {
                                 }
                             } catch (IOException e4) {
                                 // No se pudo detectar ningún tipo conocido o EOF
-                                // Intentar consumir 1 byte para evitar bucle infinito en datos desconocidos
                                 dis.reset();
                                 if (dis.available() > 0) {
                                     dis.readByte(); // Consumir 1 byte desconocido
@@ -179,13 +168,9 @@ public class BinaryFileAnalyzer {
 
                 // Si el tipo es UTF (el único que no pudimos calcular bytesLeidos de forma trivial)
                 if (tipo.equals("UTF")) {
-                    // La única forma de determinar cuántos bytes consumió readUTF sin usar 
+
                     // RandomAccessFile es leer manualmente la longitud (2 bytes) y el contenido.
-
-
-
                     // Ya que DataInputStream no expone el puntero de manera sencilla,
-                    // y el ejercicio no pide reabrir, actualizaremos bytesLeidos de forma
                     // estimada para el caso UTF.
 
                     if (bytesLeidos == 0 && tipo.equals("UTF")) {
@@ -261,7 +246,7 @@ public class BinaryFileAnalyzer {
     /**
      * Muestra el reporte por consola con formato.
      *
-     * @param reporte objeto Reporte
+
      */
     public static void mostrarReporte(Reporte reporte) {
         System.out.println("\n=== Reporte de Análisis de Archivo Binario ===");
@@ -282,7 +267,7 @@ public class BinaryFileAnalyzer {
         System.out.println("Total elementos: " + reporte.getTotalElementos());
     }
 
-    // --- EJEMPLO DE USO (MAIN) ---
+    // EJEMPLO DE USO (MAIN)
 
     public static void main(String[] args) {
         final String TEST_FILE = "datos.dat";
