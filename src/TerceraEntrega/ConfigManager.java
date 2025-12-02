@@ -3,7 +3,7 @@ import java.util.Properties;
 
 public class ConfigManager {
 
-    // --- Definición de Valores por Defecto ---
+    //  Definición de Valores por Defecto
 
     // Variables requeridas: Configuración de base de datos
     private static final String DEFAULT_DB_HOST = "localhost";
